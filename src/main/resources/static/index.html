@@ -7,10 +7,51 @@
 </head>
 <body>
 
+<div id="start-game">
+    <h1 class="title">The divider game</h1>
+    <form id="startGameForm" name="startGameForm">
+        <div class="form-group">
+            <button type="submit" class="accent">Start</button>
+        </div>
+    </form>
+</div>
+
+<div id="game-board" class="hidden">
+    <form id="gameForm" name="gameForm">
+
+        <div id="game-over" class="hidden">
+            <h2>The other player left</h2>
+        </div>
+        <div id="dividers-dropdown" class="hidden">
+            <div>
+                <button type="submit" class="primary">Send</button>
+                <label for="dividers">Choose a divider:</label>
+                <select name="dividers" id="dividers">
+                    <option value="5">5</option>
+                    <option value="7">7</option>
+                    <option value="11">11</option>
+                    <option value="13">13</option>
+                </select>
+            </div>
+        </div>
+        <div id="numbers-dropdown" class="hidden">
+            <div>
+                <button type="submit" class="primary">Send</button>
+                <label for="numbers">Choose a number to add:</label>
+                <select name="numbers" id="numbers"></select>
+            </div>
+        </div>
+        <!--        <div>-->
+        <!--            <input type="submit" value="Start playing" id="play">-->
+        <!--        </div>-->
+    </form>
+</div>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-<script src="main.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="main.js"></script>
+
 </body>
 </html>
