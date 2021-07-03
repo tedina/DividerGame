@@ -7,7 +7,9 @@ let gameForm = document.querySelector('#gameForm');
 let startGame = document.querySelector('#start-game');
 let gameBoard = document.querySelector('#game-board');
 let dividersDropdown = document.querySelector('#dividers-dropdown');
+let numbersDropdown = document.querySelector('#numbers-dropdown');
 let gameOver = document.querySelector('#game-over');
+let gameInterrupted = document.querySelector('#game-interrupted');
 
 /* Connect to the game ws */
 function connect(event) {
@@ -34,12 +36,22 @@ function onConnected(event) {
 
 /* Send messages to the queue */
 function sendMessage(event) {
-
-    let gameMessage = {
-        content: "",
-        type: "type"
+    let divider = $('#dividers').val();
+    let number = $('#numbers').val();
+    let result = $('#result').val();
+    let content = JSON.stringify({
+        divider: divider ? divider : '',
+        number: number ? number : '',
+        result: result ? result : ''
+    });
+    let message = {
+        content: content,
+        type: 'MAKE_MOVE'
     };
-    stompClient.send("/app/play.sendMessage", {}, JSON.stringify(gameMessage));
+    stompClient.send("/app/play.makeMove", {}, JSON.stringify(message));
+    if (result) {
+        numbersDropdown.classList.add('hidden');
+    }
 
     event.preventDefault();
 }
@@ -47,21 +59,85 @@ function sendMessage(event) {
 
 /* Message handler */
 function onMessageReceived(payload) {
-    console.log(payload);
     let message = JSON.parse(payload.body);
     const messageType = message.type;
-    const content = JSON.parse(message.content);
-    if (messageType === "START_GAME") {
-        if (content.content === "1") dividersDropdown.classList.remove('hidden');
-    } else if (messageType === "GAME_INTERRUPTED") {
-        gameOver.classList.remove('hidden');
+    const content = getContent(payload);
+    switch (messageType) {
+        case "START_GAME": {
+            if (!content.hasTwoPlayers) {
+                //show dividers to first player
+                dividersDropdown.classList.remove('hidden');
+            } else {
+                $('#dividers').val(content.divider);
+                //hide divider
+                dividersDropdown.classList.add('hidden');
+                //show numbers
+                populateNumbers(content.numbers);
+                if (content.result) {
+                    numbersDropdown.classList.remove('hidden');
+                }
+                //show result
+                populateResult(content);
+            }
+        }
+            break;
+        case "MAKE_MOVE": {
+            //hide dividers from first player
+            dividersDropdown.classList.add('hidden');
+            //hide or show numbers
+            populateNumbers(content.numbers);
+            if (content.result && content.hasTwoPlayers) {
+                numbersDropdown.classList.contains('hidden') ? numbersDropdown.classList.remove('hidden') : numbersDropdown.classList.add('hidden');
+            }
+            //show result
+            populateResult(content);
+        }
+            break;
+        case "GAME_OVER": {
+            gameOver.classList.remove('hidden');
+            gameBoard.classList.add('hidden');
+        }
+            break;
+        case "GAME_INTERRUPTED": {
+            gameInterrupted.classList.remove('hidden');
+            gameBoard.classList.add('hidden');
+        }
+            break;
+        case "WIN": {
+            //show result
+            populateResult(content);
+            //show final message
+            let node = document.createElement("LI");
+            let textNode = document.createTextNode(numbersDropdown.classList.contains('hidden') ? "You lose" : "You win");
+            node.appendChild(textNode);
+            document.getElementById("resultList").appendChild(node);
+        }
+            break;
+        default:
+            console.log("Something went wrong");
     }
+}
+
+function getContent(payload) {
+    return JSON.parse(JSON.parse(JSON.parse(payload.body).content).content);
+}
+
+function populateNumbers(numbers) {
+    $("#numbers").empty();
+    numbers && numbers.forEach(n => $("#numbers").append('<option value="' + n + '">' + n + '</option>'));
+}
+
+function populateResult(content) {
+    let node = document.createElement("LI");
+    let textNode = document.createTextNode("Number: " + (content.number || content.number === 0 ? content.number : "") + " Result: " + (content.result || content.result === 0 ? content.result : ""));
+    node.appendChild(textNode);
+    document.getElementById("resultList").appendChild(node);
+
 }
 
 /* Error handler */
 function onError(error) {
-    // connectingElement.textContent = "Something went wrong. Refresh and try again!";
-    // connectingElement.style.color = "red";
+    console.log(error);
 }
 
 /* Event listeners */

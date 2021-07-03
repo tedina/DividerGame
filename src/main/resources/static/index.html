@@ -10,6 +10,7 @@
 <div id="start-game">
     <h1 class="title">The divider game</h1>
     <form id="startGameForm" name="startGameForm">
+
         <div class="form-group">
             <button type="submit" class="accent">Start</button>
         </div>
@@ -18,10 +19,6 @@
 
 <div id="game-board" class="hidden">
     <form id="gameForm" name="gameForm">
-
-        <div id="game-over" class="hidden">
-            <h2>The other player left</h2>
-        </div>
         <div id="dividers-dropdown" class="hidden">
             <div>
                 <button type="submit" class="primary">Send</button>
@@ -41,12 +38,18 @@
                 <select name="numbers" id="numbers"></select>
             </div>
         </div>
-        <!--        <div>-->
-        <!--            <input type="submit" value="Start playing" id="play">-->
-        <!--        </div>-->
+        <div id="result-panel">
+            <ul id="resultList"></ul>
+        </div>
     </form>
 </div>
 
+<div id="game-interrupted" class="hidden">
+    <h2>The other player left</h2>
+</div>
+<div id="game-over" class="hidden">
+    <h2>Game over</h2>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
