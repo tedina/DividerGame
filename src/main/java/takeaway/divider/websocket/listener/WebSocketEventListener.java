@@ -6,8 +6,8 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
-import takeaway.divider.component.ApplicationManager;
-import takeaway.divider.controller.MessageFactory;
+import takeaway.divider.component.GameManager;
+import takeaway.divider.message.MessageFactory;
 import takeaway.divider.model.Message;
 
 /**
@@ -17,7 +17,7 @@ import takeaway.divider.model.Message;
 public class WebSocketEventListener {
 
     @Autowired
-    private ApplicationManager applicationManager;
+    private GameManager gameManager;
 
     @Autowired
     private MessageFactory messageFactory;
@@ -25,15 +25,15 @@ public class WebSocketEventListener {
     @EventListener
     public void onSessionConnectEvent(SessionConnectedEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        applicationManager.start(accessor);
+        gameManager.start(accessor);
     }
 
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        final String gameId = applicationManager.getGameId(accessor);
-        messageFactory.send(gameId, Message.MessageType.GAME_INTERRUPTED);
-        applicationManager.interrupt(accessor);
+        final String gameId = gameManager.getGameId(accessor);
+        messageFactory.sendToAll(gameId, Message.MessageType.GAME_INTERRUPTED);
+        gameManager.interrupt(accessor);
     }
 
 }
