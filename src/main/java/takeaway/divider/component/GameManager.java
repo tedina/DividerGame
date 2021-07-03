@@ -16,15 +16,20 @@ import java.util.Set;
  * Created by Teodora.Toncheva on 01.07.2021
  */
 @Component
-public class ApplicationManager {
+public class GameManager {
 
     /* Manages games and player objects */
-    private final Map<String, List<String>> gameTracker = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, List<String>> game = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, GameAttributes> gameAttributesMap = Collections.synchronizedMap(new LinkedHashMap<>());
 
     private String lastGameId;
 
-    public Map<String, List<String>> getGameTracker() {
-        return gameTracker;
+    public Map<String, List<String>> getGame() {
+        return game;
+    }
+
+    public Map<String, GameAttributes> getGameAttributesMap() {
+        return gameAttributesMap;
     }
 
     public String start(StompHeaderAccessor accessor) {
@@ -36,7 +41,7 @@ public class ApplicationManager {
         String gameId;
         if (lastGameId == null) {
             gameId = GameUtils.generateUUId();
-            gameTracker.put(gameId, new ArrayList<String>() {
+            game.put(gameId, new ArrayList<String>() {
                 {
                     add(playerId);
                 }
@@ -44,7 +49,7 @@ public class ApplicationManager {
             lastGameId = gameId;
         } else {
             gameId = lastGameId;
-            gameTracker.get(gameId).add(playerId);
+            game.get(gameId).add(playerId);
             lastGameId = null;
         }
         return gameId;
@@ -52,13 +57,13 @@ public class ApplicationManager {
 
     public void interrupt(StompHeaderAccessor accessor) {
         final String playerId = Objects.requireNonNull(accessor.getUser()).getName();
-        for (Map.Entry<String, List<String>> game : gameTracker.entrySet()) {
+        for (Map.Entry<String, List<String>> game : game.entrySet()) {
             if (game.getValue().contains(playerId)) {
                 final String gameId = game.getKey();
-                gameTracker.remove(gameId);
+                this.game.remove(gameId);
                 if (lastGameId != null && lastGameId.equals(gameId)) {
-                    if (gameTracker.size() >= 1) {
-                        Set<Map.Entry<String, List<String>>> entrySet = gameTracker.entrySet();
+                    if (this.game.size() >= 1) {
+                        Set<Map.Entry<String, List<String>>> entrySet = this.game.entrySet();
                         for (Map.Entry<String, List<String>> stringListEntry : entrySet) {
                             lastGameId = stringListEntry.getKey();
                         }
@@ -72,7 +77,7 @@ public class ApplicationManager {
 
     public String getGameId(StompHeaderAccessor accessor) {
         final String playerId = Objects.requireNonNull(accessor.getUser()).getName();
-        for (Map.Entry<String, List<String>> game : gameTracker.entrySet()) {
+        for (Map.Entry<String, List<String>> game : game.entrySet()) {
             if (game.getValue().contains(playerId)) {
                 return game.getKey();
             }
@@ -80,7 +85,7 @@ public class ApplicationManager {
         throw new RuntimeException(String.format("Game for player %s does not exist!", playerId));
     }
 
-    public boolean isTwoPlayers(final String gameId){
-        return gameTracker.get(gameId).size() == 2;
+    public boolean isTwoPlayers(final String gameId) {
+        return game.get(gameId).size() > 1;
     }
 }
