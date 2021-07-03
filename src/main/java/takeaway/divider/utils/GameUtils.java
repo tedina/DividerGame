@@ -19,8 +19,8 @@ public class GameUtils {
         return (int) (Math.random() * max) + min;
     }
 
-    public static int[] setOfNumbers(int divider) {
-        int[] numbers = new int[divider];
+    public static Integer[] setOfNumbers(int divider) {
+        Integer[] numbers = new Integer[divider];
         int i = divider / 2;
         numbers[i] = 0;
         int j = 1;
