@@ -9,12 +9,12 @@ public class Message {
 
     private String content;
 
-    private String sender;
-
     public enum MessageType {
         START_GAME,
-        GAME_STARTED,
-        GAME_INTERRUPTED
+        MAKE_MOVE,
+        GAME_OVER,
+        GAME_INTERRUPTED,
+        WIN
     }
 
     public MessageType getType() {
@@ -31,13 +31,5 @@ public class Message {
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-    public String getSender() {
-        return sender;
-    }
-
-    public void setSender(String sender) {
-        this.sender = sender;
     }
 }
