@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import takeaway.divider.component.GameManager;
 import takeaway.divider.message.MessageFactory;
@@ -21,12 +20,6 @@ public class WebSocketEventListener {
 
     @Autowired
     private MessageFactory messageFactory;
-
-//    @EventListener
-//    public void onSessionConnectEvent(SessionConnectedEvent event) {
-//        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-//        gameManager.start(accessor);
-//    }
 
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
