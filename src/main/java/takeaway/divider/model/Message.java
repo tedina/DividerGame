@@ -4,7 +4,7 @@ package takeaway.divider.model;
  * Created by Teodora.Toncheva on 02.07.2021
  */
 public class Message {
- 
+
     private MessageType type;
 
     private String content;
@@ -12,8 +12,8 @@ public class Message {
     public enum MessageType {
         START_GAME,
         MAKE_MOVE,
-        GAME_OVER,
         GAME_INTERRUPTED,
+        GAME_OVER,
         WIN
     }
 
