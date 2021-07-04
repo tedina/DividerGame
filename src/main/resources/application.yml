@@ -5,8 +5,3 @@ server:
   port: 9008
   servlet:
     context-path: /
-    tomcat:
-    max-http-form-post-size: 6291456
-game:
-   dividers: 5, 7, 11, 13
-   max-players: 2
