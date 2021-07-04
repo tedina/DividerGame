@@ -1,3 +1,12 @@
 .hidden {
     display: none;
 }
+
+.start-btn {
+    display: inline-block;
+}
+
+.start-checkbox {
+    display: inline-block;
+    margin-left: 85px;
+}

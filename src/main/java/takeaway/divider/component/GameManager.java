@@ -36,7 +36,7 @@ public class GameManager {
         return gameAttributesMap;
     }
 
-    public String start(StompHeaderAccessor accessor) {
+    public String start(final StompHeaderAccessor accessor) {
         final String playerId = Objects.requireNonNull(accessor.getUser()).getName();
         String gameId;
         if (lastGameId == null) {
@@ -55,7 +55,18 @@ public class GameManager {
         return gameId;
     }
 
-    public void interrupt(StompHeaderAccessor accessor) {
+    public String startSingle(final StompHeaderAccessor accessor) {
+        final String playerId = Objects.requireNonNull(accessor.getUser()).getName();
+        final String gameId = GameUtils.generateUUId();
+        game.put(gameId, new ArrayList<String>() {
+            {
+                add(playerId);
+            }
+        });
+        return gameId;
+    }
+
+    public void interrupt(final StompHeaderAccessor accessor) {
         final String playerId = Objects.requireNonNull(accessor.getUser()).getName();
         for (Map.Entry<String, List<String>> game : game.entrySet()) {
             if (game.getValue().contains(playerId)) {
@@ -75,7 +86,7 @@ public class GameManager {
         }
     }
 
-    public String getGameId(StompHeaderAccessor accessor) {
+    public String getGameId(final StompHeaderAccessor accessor) {
         final String playerId = Objects.requireNonNull(accessor.getUser()).getName();
         for (Map.Entry<String, List<String>> game : game.entrySet()) {
             if (game.getValue().contains(playerId)) {
@@ -85,14 +96,14 @@ public class GameManager {
         throw new RuntimeException(String.format("Game for player %s does not exist!", playerId));
     }
 
-    public String getInitialContent(final String gameId) throws JsonProcessingException {
+    public String getInitialContent(final String gameId, final String type) throws JsonProcessingException {
         GameAttributes gameAttributes;
         if (getGameAttributesMap().containsKey(gameId)) {
             gameAttributes = getGameAttributesMap().get(gameId);
             gameAttributes.setHasTwoPlayers(true);
         } else {
             gameAttributes = new GameAttributes();
-            gameAttributes.setHasTwoPlayers(false);
+            gameAttributes.setHasTwoPlayers(type.equals(Message.MessageType.START_GAME_SINGLE.toString()));
             getGameAttributesMap().put(gameId, gameAttributes);
         }
         final ObjectMapper mapper = new ObjectMapper();
@@ -111,36 +122,65 @@ public class GameManager {
         return mapper.writeValueAsString(gameAttributes);
     }
 
-    private void updateAttributes(String gameId, Message message, GameAttributes messageAttributes,
-                                  GameAttributes gameAttributes) {
-        final Integer divider = messageAttributes.getDivider();
-        gameAttributes.setDivider(divider);
+    private void updateAttributes(final String gameId, final Message message, final GameAttributes messageAttributes,
+                                  final GameAttributes gameAttributes) {
+        int divider;
+        if (gameAttributes.getDivider() == null) {
+            divider = messageAttributes.getDivider();
+            gameAttributes.setDivider(divider);
+        } else {
+            divider = gameAttributes.getDivider();
+        }
 
-        Integer[] numbers = GameUtils.setOfNumbers(messageAttributes.getDivider());
+        Integer[] numbers = GameUtils.setOfNumbers(divider);
         gameAttributes.setNumbers(Arrays.asList(numbers));
-        boolean canBeDivided = true;
 
         if (gameAttributes.getResult() == null) {
             gameAttributes.setResult(GameUtils.generateRandom());
+            if (isSinglePlayer(gameId)) {
+                int number = GameUtils.getRandomFromSet(divider);
+                Message.MessageType type = makeMove(message, gameAttributes, divider, number);
+                message.setType(type);
+                getGameAttributesMap().put(gameId, gameAttributes);
+            }
         } else {
-
-            final Integer number = messageAttributes.getNumber();
+            int number = messageAttributes.getNumber();
             gameAttributes.setNumber(number);
 
-            int currResult = gameAttributes.getResult();
-            Message.MessageType type = message.getType();
-            if (number != null) {
-                canBeDivided = (currResult + number) % divider == 0;
-                int result = (currResult + number) / divider;
-                gameAttributes.setResult(result);
-                if (result == 1) {
-                    type = Message.MessageType.WIN;
-                } else if (!canBeDivided) {
-                    type = Message.MessageType.GAME_OVER;
-                }
+            Message.MessageType type = makeMove(message, gameAttributes, divider, number);
+            if (isSinglePlayer(gameId)) {
+                number = GameUtils.getRandomFromSet(divider);
+                type = makeMove(message, gameAttributes, divider, number);
             }
             message.setType(type);
         }
         getGameAttributesMap().put(gameId, gameAttributes);
+    }
+
+    private Message.MessageType makeMove(final Message message, final GameAttributes gameAttributes,
+                                         final Integer divider,
+                                         final Integer number) {
+        boolean canBeDivided;
+        int currResult = gameAttributes.getResult();
+        Message.MessageType type = message.getType();
+        if (number != null) {
+            canBeDivided = (currResult + number) % divider == 0;
+            int result = (currResult + number) / divider;
+            gameAttributes.setResult(result);
+            if (result == 1) {
+                type = Message.MessageType.WIN;
+            } else if (!canBeDivided) {
+                type = Message.MessageType.GAME_OVER;
+            }
+        }
+
+        return type;
+    }
+
+    private boolean isSinglePlayer(final String gameId) {
+        if (getGameAttributesMap().get(gameId).isHasTwoPlayers()) {
+            return getGame().get(gameId).size() == 1;
+        }
+        return false;
     }
 }

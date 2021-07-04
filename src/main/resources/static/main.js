@@ -49,10 +49,10 @@ function sendMessage(event) {
         type: 'MAKE_MOVE'
     };
     stompClient.send("/app/play.makeMove", {}, JSON.stringify(message));
-    if (result) {
-        numbersDropdown.classList.add('hidden');
-    }
-
+    // if (initialMove) {
+    //     numbersDropdown.classList.add('hidden');
+    // }
+    // initialMove = false;
     event.preventDefault();
 }
 
@@ -67,6 +67,7 @@ function onMessageReceived(payload) {
             if (!content.hasTwoPlayers) {
                 //show dividers to first player
                 dividersDropdown.classList.remove('hidden');
+                initialMove = true;
             } else {
                 $('#dividers').val(content.divider);
                 //hide divider
@@ -89,13 +90,19 @@ function onMessageReceived(payload) {
             if (content.result && content.hasTwoPlayers) {
                 numbersDropdown.classList.contains('hidden') ? numbersDropdown.classList.remove('hidden') : numbersDropdown.classList.add('hidden');
             }
+            if (initialMove) {
+                numbersDropdown.classList.add('hidden');
+                initialMove = false;
+            }
             //show result
             populateResult(content);
         }
             break;
         case "GAME_OVER": {
+
             gameOver.classList.remove('hidden');
-            gameBoard.classList.add('hidden');
+            numbersDropdown.classList.add('hidden');
+            dividersDropdown.classList.add('hidden');
         }
             break;
         case "GAME_INTERRUPTED": {
@@ -129,7 +136,8 @@ function populateNumbers(numbers) {
 
 function populateResult(content) {
     let node = document.createElement("LI");
-    let textNode = document.createTextNode("Number: " + (content.number || content.number === 0 ? content.number : "") + " Result: " + (content.result || content.result === 0 ? content.result : ""));
+    result = content.result;
+    let textNode = document.createTextNode("The divider: " + (content.divider || content.divider === 0 ? content.divider : "") + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 Number: " + (content.number || content.number === 0 ? content.number : "") + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 Result: " + (content.result || content.result === 0 ? content.result : ""));
     node.appendChild(textNode);
     document.getElementById("resultList").appendChild(node);
 

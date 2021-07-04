@@ -22,11 +22,11 @@ public class WebSocketEventListener {
     @Autowired
     private MessageFactory messageFactory;
 
-    @EventListener
-    public void onSessionConnectEvent(SessionConnectedEvent event) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        gameManager.start(accessor);
-    }
+//    @EventListener
+//    public void onSessionConnectEvent(SessionConnectedEvent event) {
+//        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+//        gameManager.start(accessor);
+//    }
 
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
