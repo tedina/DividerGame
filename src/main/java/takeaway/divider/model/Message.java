@@ -4,7 +4,7 @@ package takeaway.divider.model;
  * Created by Teodora.Toncheva on 02.07.2021
  */
 public class Message {
-
+ 
     private MessageType type;
 
     private String content;
