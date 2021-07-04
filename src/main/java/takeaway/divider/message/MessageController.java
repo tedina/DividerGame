@@ -32,11 +32,18 @@ public class MessageController {
     @SendTo("/queue/public")
     public void addUser(
             @Payload
-                    Message message, StompHeaderAccessor accessor) throws JsonProcessingException {
+            final Message message, final StompHeaderAccessor accessor) throws JsonProcessingException {
+
+        final String type = message.getType().toString();
+        if (type.equals(Message.MessageType.START_GAME_SINGLE.toString())) {
+            gameManager.startSingle(accessor);
+        } else {
+            gameManager.start(accessor);
+        }
 
         final String gameId = gameManager.getGameId(accessor);
         final String userId = Objects.requireNonNull(accessor.getUser()).getName();
-        final String content = gameManager.getInitialContent(gameId);
+        final String content = gameManager.getInitialContent(gameId, type);
 
         messageFactory.sendToUser(userId, message.getType(), content);
         logger.info("gameId: " + gameId + ", userId: " + userId + ", " + content + " " + message.getType().toString());
@@ -46,7 +53,7 @@ public class MessageController {
     @SendTo("/queue/public")
     public void makeMove(
             @Payload
-                    Message message, StompHeaderAccessor accessor) throws JsonProcessingException {
+            final Message message, final StompHeaderAccessor accessor) throws JsonProcessingException {
 
         final String gameId = gameManager.getGameId(accessor);
         final String content = gameManager.getContent(gameId, message);

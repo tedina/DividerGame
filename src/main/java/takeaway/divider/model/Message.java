@@ -11,6 +11,7 @@ public class Message {
 
     public enum MessageType {
         START_GAME,
+        START_GAME_SINGLE,
         MAKE_MOVE,
         GAME_INTERRUPTED,
         GAME_OVER,

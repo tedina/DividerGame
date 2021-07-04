@@ -10,6 +10,9 @@ let dividersDropdown = document.querySelector('#dividers-dropdown');
 let numbersDropdown = document.querySelector('#numbers-dropdown');
 let gameOver = document.querySelector('#game-over');
 let gameInterrupted = document.querySelector('#game-interrupted');
+let singlePlayer = document.querySelector('#singlePlayer');
+let result;
+let initialMove;
 
 /* Connect to the game ws */
 function connect(event) {
@@ -24,12 +27,14 @@ function connect(event) {
 function onConnected(event) {
     startGame.classList.add('hidden');
     gameBoard.classList.remove('hidden');
+    let type = $('#singlePlayer').is(":checked") ? 'START_GAME_SINGLE' : 'START_GAME'
 
     stompClient.subscribe('/user/queue/public', onMessageReceived);
+
     let message = {
         sender: '',
         content: '',
-        type: 'START_GAME'
+        type: type
     };
     stompClient.send("/app/play.addUser", {}, JSON.stringify(message));
 }
@@ -38,7 +43,7 @@ function onConnected(event) {
 function sendMessage(event) {
     let divider = $('#dividers').val();
     let number = $('#numbers').val();
-    let result = $('#result').val();
+
     let content = JSON.stringify({
         divider: divider ? divider : '',
         number: number ? number : '',
@@ -80,6 +85,13 @@ function onMessageReceived(payload) {
                 //show result
                 populateResult(content);
             }
+        }
+            break;
+        case "START_GAME_SINGLE": {
+            $('#dividers').val(content.divider);
+            //hide divider
+            dividersDropdown.classList.remove('hidden');
+            populateResult(content);
         }
             break;
         case "MAKE_MOVE": {

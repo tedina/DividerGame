@@ -1,5 +1,6 @@
 package takeaway.divider.utils;
 
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -31,5 +32,12 @@ public class GameUtils {
         }
 
         return numbers;
+    }
+
+    public static int getRandomFromSet(int divider) {
+        Integer[] numbers = setOfNumbers(divider);
+        int rnd = new Random().nextInt(numbers.length);
+
+        return numbers[rnd];
     }
 }
