@@ -1,10 +1,14 @@
 package takeaway.divider.component;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
+import takeaway.divider.model.Message;
 import takeaway.divider.utils.GameUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,10 +37,6 @@ public class GameManager {
     }
 
     public String start(StompHeaderAccessor accessor) {
-        return startNewGame(accessor);
-    }
-
-    private String startNewGame(final StompHeaderAccessor accessor) {
         final String playerId = Objects.requireNonNull(accessor.getUser()).getName();
         String gameId;
         if (lastGameId == null) {
@@ -85,7 +85,62 @@ public class GameManager {
         throw new RuntimeException(String.format("Game for player %s does not exist!", playerId));
     }
 
-    public boolean isTwoPlayers(final String gameId) {
-        return game.get(gameId).size() > 1;
+    public String getInitialContent(final String gameId) throws JsonProcessingException {
+        GameAttributes gameAttributes;
+        if (getGameAttributesMap().containsKey(gameId)) {
+            gameAttributes = getGameAttributesMap().get(gameId);
+            gameAttributes.setHasTwoPlayers(true);
+        } else {
+            gameAttributes = new GameAttributes();
+            gameAttributes.setHasTwoPlayers(false);
+            getGameAttributesMap().put(gameId, gameAttributes);
+        }
+        final ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(gameAttributes);
+    }
+
+    public String getContent(final String gameId, final Message message) throws JsonProcessingException {
+        final ObjectMapper mapper = new ObjectMapper();
+        final String messageContent = message.getContent();
+
+        final GameAttributes messageAttributes = mapper.readValue(messageContent, GameAttributes.class);
+        final GameAttributes gameAttributes = getGameAttributesMap().get(gameId);
+        updateAttributes(gameId, message, messageAttributes, gameAttributes);
+
+
+        return mapper.writeValueAsString(gameAttributes);
+    }
+
+    private void updateAttributes(String gameId, Message message, GameAttributes messageAttributes,
+                                  GameAttributes gameAttributes) {
+        final Integer divider = messageAttributes.getDivider();
+        gameAttributes.setDivider(divider);
+
+        Integer[] numbers = GameUtils.setOfNumbers(messageAttributes.getDivider());
+        gameAttributes.setNumbers(Arrays.asList(numbers));
+        boolean canBeDivided = true;
+
+        if (gameAttributes.getResult() == null) {
+            gameAttributes.setResult(GameUtils.generateRandom());
+        } else {
+
+            final Integer number = messageAttributes.getNumber();
+            gameAttributes.setNumber(number);
+
+            int currResult = gameAttributes.getResult();
+            Message.MessageType type = message.getType();
+            if (number != null) {
+                canBeDivided = (currResult + number) % divider == 0;
+                int result = (currResult + number) / divider;
+                gameAttributes.setResult(result);
+                if (result == 1) {
+                    type = Message.MessageType.WIN;
+                } else if (!canBeDivided) {
+                    type = Message.MessageType.GAME_OVER;
+                }
+            }
+            message.setType(type);
+        }
+        getGameAttributesMap().put(gameId, gameAttributes);
     }
 }
